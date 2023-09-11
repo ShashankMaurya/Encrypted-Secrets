@@ -42,6 +42,10 @@ const userSchema = new mongoose.Schema({
     googleId: {
         type: String,
         // required: [true, 'Why no email?']
+    },
+    secret: {
+        type: String,
+        // required: [true, 'Why no email?']
     }
 });
 
@@ -88,9 +92,6 @@ passport.use(new GoogleStrategy({
 
 
 
-
-
-
 // GET requests
 
 app.get('/', function (req, res) {
@@ -130,13 +131,32 @@ app.get('/register', function (req, res) {
 });
 
 app.get('/secrets', function (req, res) {
+
+    // if (req.isAuthenticated()) {
+    //     res.render('secrets');
+    // }
+    // else {
+    //     res.redirect('/login');
+    // }
+
+    User.find({ "secret": { $ne: null } })
+        .then((foundUsers) => {
+            if (foundUsers) {
+                res.render("secrets", { usersWithSecrets: foundUsers });
+            }
+        })
+        .catch((err) => console.log(err));
+});
+
+app.get('/submit', function (req, res) {
     if (req.isAuthenticated()) {
-        res.render('secrets');
+        res.render('submit');
     }
     else {
         res.redirect('/login');
     }
 })
+
 
 
 
@@ -234,6 +254,18 @@ app.post('/login', function (req, res) {
     //     })
     //     .catch((err) => console.log(err));
 
+});
+
+app.post('/submit', function (req, res) {
+    // console.log(req.user);
+    User.findById(req.user.id)
+        .then((foundUser) => {
+            foundUser.secret = req.body.secret;
+            foundUser.save()
+                .then(() => res.redirect('/secrets'));
+            console.log("Secret saved successfully");
+        })
+        .catch((err) => console.log(err));
 });
 
 
